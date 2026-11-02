@@ -1,47 +1,37 @@
 name: Build Nihongo Quest APK
-
 on:
   workflow_dispatch:
   push:
     paths:
       - 'nihongo-quest-build-ready.zip'
       - '.github/workflows/build-nihongo-apk.yml'
-
 permissions:
   contents: read
-
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - name: Extract project
         run: |
           mkdir -p project
           unzip -q nihongo-quest-build-ready.zip -d project
           cp -a project/. .
-
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
-
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '9.3.1'
-
       - name: Accept SDK Licenses and Install SDK
         run: |
           yes | ${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager --licenses
           ${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager "platforms;android-36" "platforms;android-36-ext1" "build-tools;36.0.0" "platform-tools"
-
       - name: Create debug key
         run: keytool -genkeypair -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
-
       - name: Build APK
         run: gradle --no-daemon --stacktrace :app:assembleDebug
-
       - uses: actions/upload-artifact@v4
         with:
           name: NihongoQuest-debug-apk
